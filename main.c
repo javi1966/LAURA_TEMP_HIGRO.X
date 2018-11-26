@@ -11,7 +11,7 @@
 #include "delay.h"
 #include "displayPWM.h"
 #include "i2c_HAL.h"
-#include "rtcc_MCP79410.h"
+#include "ds3231.h"
 #include "sht21.h"
 
 _FOSCSEL(FNOSC_FRCPLL) //Oscilador Fast RC 8Mhz
@@ -89,9 +89,15 @@ int main(void) {
 
     initDisplayPWM();
     i2c_init();
+    
+   
 
-    ini_rtcc(); //  initialize MCP79410(enable VBAT).
-    ini_time();
+   // ini_rtcc(); //  initialize MCP79410(enable VBAT).
+   // ini_time();
+    
+    //DS3231_SetInfo(SECONDS, 0x00);
+    //DS3231_SetInfo(MINUTES, 0x14);
+    //DS3231_SetInfo(HOURS, 0x01 | MODE_12HOUR_PM);
 
 
     lee_SHT21();
@@ -107,7 +113,8 @@ int main(void) {
                 incr_hr();
                 delay_ms(300);
           }
-           rtcc_wr(hr,ADDR_HOUR);
+           //rtcc_wr(hr,ADDR_HOUR);
+           DS3231_SetInfo(HOURS, hr | MODE_12HOUR_PM);
            numHumTemHor=0;
            
          // ENABLE_INT
@@ -119,7 +126,8 @@ int main(void) {
                delay_ms(300);
           }
          
-          rtcc_wr(min,ADDR_MIN);
+          //rtcc_wr(min,ADDR_MIN);
+          DS3231_SetInfo(MINUTES, min);
           numHumTemHor=0;
          
           //ENABLE_INT
@@ -260,11 +268,12 @@ void lee_SHT21() {
 
 void displayHora() {
 
-    hr = rtcc_rd(ADDR_HOUR); // read HOUR
-
-    min = rtcc_rd(ADDR_MIN); // read MIN
-
-    sec = rtcc_rd(ADDR_SEC); // read MIN
+    //hr = rtcc_rd(ADDR_HOUR); // read HOUR
+   hr=DS3231_GetInfo(HOURS);
+    //min = rtcc_rd(ADDR_MIN); // read MIN
+   // min=DS3231_GetInfo(MINUTES);
+    //sec = rtcc_rd(ADDR_SEC); // read MIN
+   // sec=DS3231_GetInfo(SECONDS);
 
 
     // buf_hora[2] = ((sec & (~START_32KHZ)) >> 4) + 0x30;
