@@ -270,7 +270,7 @@ void creaArray(char *buf,BYTE DecPlace) {
                 leds[digit][2] = 1;
                 leds[digit][3] = 0;
                 leds[digit][4] = 0;
-                leds[digit][5] = 0;
+                leds[digit][5] = 1;
                 leds[digit][6] = 0;
                 break;
 

@@ -176,30 +176,34 @@ void read_SHT21(WORD *Temperatura, BYTE *Humedad) {
     i2c_restart();
     i2c_wr(READ);
     i2c_idle();
-    delay_ms(60);
+    
+    
+    delay_ms(85);
 
     buf[0] = i2c_rd();
     i2c_ack();
     buf[1] = i2c_rd();
     i2c_nack();
+    
+    
+    val = (buf[0] << 8);
+    val += buf[1];
+    val &= ~0x0003;
 
-    val = buf[0];
+    /*val = buf[0];
     val <<= 8;
     val += buf[1];
-    val &= 0xFFFC;
+    val &= 0xFFFC;*/
 
     //   T = -6 + 125* Srh/65535
     //	 T = -6 + Srh / 524,28
     //   T = -6 + (Srh * 256) / 134215      |  *256	 wegen Numerik erweitern
-
-    val = ((val * 256) / 134215) - 6;
-    *Humedad = val;
-
-
-
-
-    i2c_stop();
-    delay_10us(4);
-
+    
+    *Humedad=(-6.0 + 125.0/65536 * val);
+    
+   // val = ((val * 256) / 134215) - 6;
+   // *Humedad = val;
+   i2c_stop();
+   delay_ms(14);
 
 }

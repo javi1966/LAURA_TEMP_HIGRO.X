@@ -16,13 +16,26 @@
 //byte1: Sets the information.
 //==============================================================================
 
-void DS3231_SetInfo(unsigned char byte0, unsigned char byte1) {
+void initDS3231() {
+
     i2c_start();
     i2c_wr(0xD0);
-    i2c_wr(0);
-    i2c_wr(0);
-    i2c_wr(byte0);
-    i2c_wr(byte1);
+    i2c_wr(0x0E);
+    i2c_wr(0x04); /* enable sqw, 1hz output */
+    i2c_stop();
+
+}
+
+
+
+void DS3231_SetInfo(unsigned char addr, unsigned char val) {
+    i2c_start();
+    i2c_wr(0xD0);
+    i2c_idle();
+    i2c_wr(addr);
+    i2c_idle();
+    i2c_wr(val);
+    i2c_idle();
     i2c_stop();
 }
 
@@ -33,16 +46,22 @@ void DS3231_SetInfo(unsigned char byte0, unsigned char byte1) {
 //byte1: Return the  information.
 //==============================================================================
 
-unsigned char DS3231_GetInfo(unsigned char byte0) {
+unsigned char DS3231_GetInfo(unsigned char addr) {
     unsigned char byte1 = 0;
     i2c_start();
     i2c_wr(0xD0);
-    i2c_wr(0);
-    i2c_start();
+    i2c_idle();
+    i2c_wr(addr);
+    i2c_idle();
+    i2c_restart();
+   
     
     i2c_wr(0xD1);
+    i2c_idle();
     byte1 = i2c_rd();
+    i2c_nack();
     i2c_stop();
+    
     return (byte1);
 }
 
@@ -412,8 +431,8 @@ void DS3231_GetCalendar(unsigned char *p) {
 //Converts a variable of BCD to Decimal.
 //==============================================================================
 
-unsigned char BCDToDecimal(unsigned char byte0) {
-    return (((byte0 & 0xF0) >> 4) * 10) + (byte0 & 0x0F);
+unsigned char BCDToDecimal(unsigned char val) {
+    return ((val / 16 * 10) + (val % 16));
 }
 
 
@@ -421,6 +440,7 @@ unsigned char BCDToDecimal(unsigned char byte0) {
 //Converts a variable of Decimal to BCD.
 //==============================================================================
 
-unsigned char DecimalToBCD(unsigned char byte0) {
-    return (((byte0 / 10) << 4) | (byte0 % 10));
+  unsigned char DecimalToBCD(unsigned char val) {
+    return ((val / 10 * 16) + (val % 10));
 }
+

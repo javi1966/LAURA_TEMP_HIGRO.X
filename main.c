@@ -50,8 +50,8 @@ int numHumTemHor = 0;
 BOOL bUpDown = TRUE;
 BOOL bEstado = FALSE;
 BOOL bDP = FALSE;
-BYTE hr, min, sec;
-char buf_hora[5]="8888";
+unsigned char hr, min, sec;
+unsigned char buf_hora[5] = "8888";
 char bufferTemperatura[5];
 char bufferHumedad[5];
 
@@ -66,7 +66,7 @@ void incr_hr(void);
 
 int main(void) {
 
-    int j=0;
+    int j = 0;
 
     TRIS_KEYB1 = 1;
     TRIS_KEYB2 = 1;
@@ -90,49 +90,53 @@ int main(void) {
     initDisplayPWM();
     i2c_init();
     
-   
+    delay_ms(1000);
 
-   // ini_rtcc(); //  initialize MCP79410(enable VBAT).
-   // ini_time();
+    initDS3231();
+
     
-    //DS3231_SetInfo(SECONDS, 0x00);
-    //DS3231_SetInfo(MINUTES, 0x14);
-    //DS3231_SetInfo(HOURS, 0x01 | MODE_12HOUR_PM);
-
+    // ini_rtcc(); //  initialize MCP79410(enable VBAT).
+    // ini_time();
 
     lee_SHT21();
-         
-
+    
+    
+   
+    delay_ms(1000);
+    
     while (TRUE) {
 
         //******************************************************
 
-        if(!KEYB1){
-          //DISABLE_INT
-          while(!KEYB1){
-                incr_hr();
+        if (!KEYB1) {
+            //DISABLE_INT
+            while (!KEYB1) {
+                DS3231_AddData(HOURS);
                 delay_ms(300);
-          }
-           //rtcc_wr(hr,ADDR_HOUR);
-           DS3231_SetInfo(HOURS, hr | MODE_12HOUR_PM);
-           numHumTemHor=0;
-           
-         // ENABLE_INT
+            }
+            //rtcc_wr(hr,ADDR_HOUR);
+            //DS3231_SetInfo(HOURS, hr);
+            
+            numHumTemHor = 0;
+
+            // ENABLE_INT
         }
 
-          if(!KEYB2){
-          while(!KEYB2){
-                incr_min();
-               delay_ms(300);
-          }
-         
-          //rtcc_wr(min,ADDR_MIN);
-          DS3231_SetInfo(MINUTES, min);
-          numHumTemHor=0;
-         
-          //ENABLE_INT
+        if (!KEYB2) {
+            
+           
+            while (!KEYB2) {
+                 DS3231_AddData(MINUTES);
+                delay_ms(300);
+            }
+
+            //rtcc_wr(min,ADDR_MIN);
+           
+            numHumTemHor = 0;
+
+            //ENABLE_INT
         }
-        
+
         //******************************************************
         if (bFlag500ms) {
 
@@ -153,7 +157,7 @@ int main(void) {
 
         if (bFlag1seg) {
 
-           
+
             bDP = !bDP;
             displayHora();
             bFlag1seg = FALSE;
@@ -164,24 +168,24 @@ int main(void) {
             bFlag5min = FALSE;
         }
 
-       
+
 
         switch (numHumTemHor) {
 
             case 0:if (bDP)
-                     printDisplayPWMtxt(buf_hora, DPOFF);
-                   else
-                     printDisplayPWMtxt(buf_hora, DPCENTRO);
+                    printDisplayPWMtxt(buf_hora, DPOFF);
+                else
+                    printDisplayPWMtxt(buf_hora, DPCENTRO);
 
-                   break;
+                break;
 
             case 1:printDisplayPWMtxt(bufferTemperatura, DPCENTRO);
-                   break;
+                break;
 
             case 2:printDisplayPWMtxt(bufferHumedad, DPOFF);
-                   break;
+                break;
             default:
-                   break;
+                break;
         }
 
     } //while
@@ -247,7 +251,7 @@ void _ISR __attribute__((__no_auto_psv__)) _T1Interrupt(void) {
 void lee_SHT21() {
 
     WORD Temperatura;
-    BYTE Humedad;
+    WORD Humedad;
 
     read_SHT21(&Temperatura, &Humedad);
 
@@ -256,7 +260,7 @@ void lee_SHT21() {
     bufferTemperatura[3] = 'º';
     bufferTemperatura[4] = '\0';
 
-    sprintf(bufferHumedad, "%u", Humedad);
+    sprintf(bufferHumedad, "%u", 100 -Humedad );
     bufferHumedad[2] = 'º';
     bufferHumedad[3] = 'H';
     bufferHumedad[4] = '\0';
@@ -269,13 +273,16 @@ void lee_SHT21() {
 void displayHora() {
 
     //hr = rtcc_rd(ADDR_HOUR); // read HOUR
-   hr=DS3231_GetInfo(HOURS);
+    hr = DS3231_GetInfo(HOURS);
     //min = rtcc_rd(ADDR_MIN); // read MIN
-   // min=DS3231_GetInfo(MINUTES);
+    min = DS3231_GetInfo(MINUTES);
     //sec = rtcc_rd(ADDR_SEC); // read MIN
-   // sec=DS3231_GetInfo(SECONDS);
+    sec = DS3231_GetInfo(SECONDS);
+    
+    
+    //sprintf(buf_hora, "%02d%02d", hr,min);
 
-
+    // leeDS3231();
     // buf_hora[2] = ((sec & (~START_32KHZ)) >> 4) + 0x30;
     // mask the START bit, extract MS digit by shifting
     // right 4 times,  add the ASCII digit offset
@@ -289,7 +296,7 @@ void displayHora() {
     buf_hora[1] = (hr & 0x0F) + 0x30;
     buf_hora[4] = '\0';
 
-
+   
 }
 //********************************************************************
 
@@ -313,6 +320,9 @@ BYTE keyb_press(void) {
 
 void incr_hr(void) // increments HOURS value
 {
+    if(hr++ == 0x60)
+        hr=0;
+    /*
     switch (hr) { // none auxiliary control/status bits
         case 0x23:
         {
@@ -335,20 +345,28 @@ void incr_hr(void) // increments HOURS value
             break;
         }
     } // in any other case, increment value
-
+  */
 } // display date value
 //........................................................................................
 
 void incr_min(void) // increments MINUTES ('minutes' have no aux flags)
 {
-    if (min == 0x59) {
+    
+    
+    
+ 
+    if (min > 0x59) {
         min = 0x00;
     }// overflow after 59 minutes
-        else if ((min & 0x0f) == 0x09) // m9 --> (m+1)0
-        {
-            min = (min + 16)&0xf0;
-        } else {
-            min++;
-        } // mm --> m(m+1)
-
-    } // display new MINUTES value
+    else if ((min & 0x0f) == 0x09) // m9 --> (m+1)0
+    {
+        min = (min + 0x0f) & 0xf0;
+    } else {
+        min++;
+    } // mm --> m(m+1)*/
+    
+ 
+    
+     
+} // display new MINUTES value
+//********************************************************************
