@@ -100,8 +100,6 @@ int main(void) {
 
     lee_SHT21();
     
-    
-   
     delay_ms(1000);
     
     while (TRUE) {
@@ -156,7 +154,6 @@ int main(void) {
         }
 
         if (bFlag1seg) {
-
 
             bDP = !bDP;
             displayHora();
@@ -253,14 +250,17 @@ void lee_SHT21() {
     WORD Temperatura;
     WORD Humedad;
 
-    read_SHT21(&Temperatura, &Humedad);
+    //read_SHT21(&Temperatura, &Humedad);
 
-    sprintf(bufferTemperatura, "%.1f", ((float) Temperatura) / 10);
+    //sprintf(bufferTemperatura, "%.1f", ((float) Temperatura) / 10);
+    
+    sprintf(bufferTemperatura, "%.1f", readTemperatura());
     bufferTemperatura[2] = bufferTemperatura[3];
     bufferTemperatura[3] = 'º';
     bufferTemperatura[4] = '\0';
 
-    sprintf(bufferHumedad, "%u", 100 -Humedad );
+    sprintf(bufferHumedad, "%.1f", readHumedad() );
+   // bufferHumedad[2] = bufferHumedad[3];
     bufferHumedad[2] = 'º';
     bufferHumedad[3] = 'H';
     bufferHumedad[4] = '\0';
@@ -351,9 +351,7 @@ void incr_hr(void) // increments HOURS value
 
 void incr_min(void) // increments MINUTES ('minutes' have no aux flags)
 {
-    
-    
-    
+  
  
     if (min > 0x59) {
         min = 0x00;
