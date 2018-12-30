@@ -120,7 +120,7 @@ float readTemperatura() {
     float tmp;
 
     temp = readSHT21(TEMPERATURA);
-    tmp = (175.72 * ((float) temp / 0xFFFF)) - 46.85;
+    tmp = (-46.85 + 175.72/65536 * (float)temp);
 
     return tmp;
 }
@@ -185,21 +185,18 @@ void read_SHT21(WORD *Temperatura, BYTE *Humedad) {
     buf[1] = i2c_rd();
     i2c_nack();
     
-    
-    val = (buf[0] << 8);
-    val += buf[1];
-    val &= ~0x0003;
+   
 
-    /*val = buf[0];
+    val = buf[0];
     val <<= 8;
     val += buf[1];
-    val &= 0xFFFC;*/
+    val &= 0xFFFC;
 
     //   T = -6 + 125* Srh/65535
     //	 T = -6 + Srh / 524,28
     //   T = -6 + (Srh * 256) / 134215      |  *256	 wegen Numerik erweitern
     
-    *Humedad=(-6.0 + 125.0/65536 * val);
+    *Humedad=(-6.0 + 125.0/65536 * (float)val);
     
    // val = ((val * 256) / 134215) - 6;
    // *Humedad = val;
